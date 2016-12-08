@@ -1,8 +1,0 @@
-cpu/cpu-cycles
-cpu/instructions
-cpu/cache-misses
-cpu/branch-misses
-branch_instruction_retired
-Branch_Misses_Retired
-mem_load_uops_retired.l1_miss
-mem_load_uops_retired.l1_hit
