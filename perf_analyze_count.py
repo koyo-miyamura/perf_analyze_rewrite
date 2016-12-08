@@ -28,14 +28,21 @@ def gettime(db):
   con = sqlite3.connect(db)
   cur = con.cursor()
 
-  min = float("inf")
-  max = float("-inf")
-  sql = u"select time from perf_event"
-  for row in cur.execute(sql):
-    if min > row[0]:
-      min = row[0]
-    if max < row[0]:
-      max = row[0]
+#  min = float("inf")
+#  max = float("-inf")
+#  sql = u"select time from perf_event"
+#  for row in cur.execute(sql):
+#    if min > row[0]:
+#      min = row[0]
+#    if max < row[0]:
+#      max = row[0]
+  
+  sql_min = u"select min(time) from perf_event"
+  sql_max = u"select max(time) from perf_event"
+  for row in cur.execute(sql_min):
+    min = row[0]
+  for row in cur.execute(sql_max):
+    max = row[0]
   con.close()
   return (min, max)
 
@@ -84,8 +91,13 @@ def analyze_events(args):
     sql  = u"select count from perf_event"
     sql += u" where event like \"%%%s%%\" and cpu=%d" % (event[i], 0)
     sql += u" and  time between %f and %f"   % (start, end)
-    cur.execute(sql)
     #the count of PC
+
+#    for row in cur.execute(sql):
+#      if(len(row)!=0):
+#        dict[i] += row[0]    
+
+    cur.execute(sql)
     list = cur.fetchall()
     if(len(list)!=0):
       dict[i] =list[0][0]*len(list)
@@ -143,7 +155,7 @@ event  =["cpu/cpu-cycles"
         ,"mem_load_uops_retired.l1_miss"
         ,"mem_load_uops_retired.l1_hit"]
 offset = 1.0              # ARG4
-length = 0.1              # ARG5
+length = 0.01              # ARG5
 
 if argc >= 2:
   input = argvs[1]
@@ -196,9 +208,10 @@ if not os.path.isfile(dbs[0]):
 
   ### Insert Data
   for i in range(len(event)):
-    reader = csv.reader(open(input+"_"+str(i)+".csv", 'rb'), delimiter='\t')
+    reader = csv.reader(open(input+"_"+str(i)+".csv", 'rb'), delimiter=';')
     sql = u"insert into perf_event values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     for idx, row in enumerate(reader):
+      print(row)
       row[2] = int(re.search('[0-9]+', row[2]).group(0))
       #only cpu0 is inserted
       if(row[2]==0):
@@ -226,8 +239,8 @@ if __name__ == '__main__':
   start = time_range[0] + offset
   summary = []
   while start < time_range[1]: 
-  #for i in range(3):
-    time_s = time.time()
+#  for i in range(100):
+#    time_s = time.time()
     end   = start + length
 
   ### Count CPU events
@@ -236,7 +249,7 @@ if __name__ == '__main__':
     for i in range(ncpus):
      args.append((dbs[i], event, cpu, start, end))
     result2 = p.map(analyze_events, args)
-    print("time:"+str(time.time()-time_s)+"[s]")
+#    print("time:"+str(time.time()-time_s)+"[s]")
     summary.append(reduce_analyze_events(result2))
 #    cpu_events = numpy.array([ 0 for i in range(cpu) ])
 #    for key in summary.keys():
@@ -314,9 +327,11 @@ if __name__ == '__main__':
   writer = csv.writer(open('perf_analyze.csv', 'wb'), delimiter=';')
   #print(summary)
   writer.writerow(["time"] + [ "%s" % event[i] for i in range(len(event)) ])
+#  time_csv_s =time.time()
   for i in range(len(summary)):
-    time = [length*(i+1)]
-    writer.writerow(time+summary[i])
+    t = [length*(i+1)]
+    writer.writerow(t+summary[i])
+#  print("write csv time:"+str(time.time()-time_csv_s)+"[s]")
   #writer.writerows(summary)
 
 #  writer.writerow(["C0-State Ratio[%]"] + cpurunning + ["nan"])
