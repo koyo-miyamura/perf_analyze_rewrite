@@ -8,6 +8,42 @@ EOT
 exit
 }
 
+split_events() {
+  local STRS=(`echo $EVENTS | sed "s:,: :g"`)
+  local RETVAL=()
+
+  local SLASHFLAG="FALSE"
+  local TEMP=""
+
+  for STR in ${STRS[*]}
+  do
+    if [ $SLASHFLAG == "TRUE" ]; then
+      TMP=$TMP,$STR
+      # when $STR is like: "period=1000/"
+      if [[ "$STR" =~ / ]]; then
+        # when the event has 'name=', extract its name.
+        if [[ "$TMP" =~ name= ]]; then
+          TMP=`echo $TMP | sed "s:.*name=\([^,/]*\)[,/].*:\1:"`
+        fi
+        RETVAL[${#RETVAL[*]}]=$TMP
+        TMP=""
+        SLASHFLAG="FALSE"
+      fi
+    else
+      # when $STR is like: "cpu/cpu-cycles/"
+      if [[ "$STR" =~ [^/]+/[^/]+/ ]]; then
+        RETVAL[${#RETVAL[*]}]=$STR
+      # when $STR is like: "cpu/cpu-cycles"
+      elif [[ "$STR" =~ / ]]; then
+        TMP=$STR
+        SLASHFLAG="TRUE"
+      fi
+    fi
+  done
+
+  echo ${RETVAL[*]}
+}
+
 func1() {
   local INPUT=$1
   local OUTPUT=$2
@@ -48,14 +84,14 @@ func2() {
 
 #To match pattern,the event's description has to change
 #and you don't give / to the last event description for matching
-EVENTS="cpu/cpu-cycles/"
-EVENTS=$EVENTS",cpu/instructions/"
-EVENTS=$EVENTS",cpu/cache-misses/"
-EVENTS=$EVENTS",cpu/branch-misses/"
-EVENTS=$EVENTS",branch_instruction_retired/"
-EVENTS=$EVENTS",Branch_Misses_Retired/"
-EVENTS=$EVENTS",mem_load_uops_retired.l1_miss/"
-EVENTS=$EVENTS",mem_load_uops_retired.l1_hit"
+EVENTS="cpu/cpu-cycles,period=10000000/"
+EVENTS=$EVENTS",cpu/instructions,period=10000000/"
+EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
+EVENTS=$EVENTS",cpu/branch-misses,period=1000000/"
+EVENTS=$EVENTS",cpu/event=0xc4,umask=0x00,name=branch_instruction_retired,period=100000/"
+EVENTS=$EVENTS",cpu/event=0xc5,umask=0x00,name=Branch_Misses_Retired,period=10000/"
+EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=10000/"
+EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=10000000/"
 
 INPUT=""
 PERF=`which perf`
@@ -90,8 +126,7 @@ OUTDIR=${INDIR}/../perf.csv
 [ ! -d ${OUTDIR} ] && mkdir ${OUTDIR}
 OUTPUT=${OUTDIR}/`basename ${INPUT}`
 
-#/ is not needed because of pattern
-EVENTS_A=(`echo $EVENTS | sed "s:/,: :g"`)
+EVENTS_A=`split_events`
 
 $PERF script -i ${INPUT}_0 > $TMPDIR/$$
 
