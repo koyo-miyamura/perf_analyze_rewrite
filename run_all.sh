@@ -18,9 +18,7 @@ ${RECORD} | tee record.log
 #${RECORD}
 ${PERF2CSV} -i `cat ${TMPDIR}/p_rec.tmp` > perf2csv.log
 
-:<<comment
 ${ANALYZE} \
   `cat ${TMPDIR}/perf2csv.tmp` \
   `grep processor /proc/cpuinfo | wc -l` \
-  ipc > perf_analyze.log
-comment
+   > perf_analyze.log

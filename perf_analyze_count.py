@@ -205,22 +205,41 @@ if not os.path.isfile(dbs[0]):
   for i in range(ncpus):
     cons[i].execute(sql)
     cons[i].execute("create index analyze on perf_event(time,count,event)")
-
+  
+  time_insert_s = time.time()
   ### Insert Data
   for i in range(len(event)):
     reader = csv.reader(open(input+"_"+str(i)+".csv", 'rb'), delimiter=';')
     sql = u"insert into perf_event values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+#    insert_row = []
+#    insert_count = 0
     for idx, row in enumerate(reader):
-      print(row)
+#      row[2] = int(re.search('[0-9]+', row[2]).group(0))
+#      #only cpu0 is inserted
+#      if(row[2]==0):
+#        insert_row.append(row)
+#        insert_count += 1
+#      if(insert_count % 200000 == 0):
+#        cons[idx%ncpus].executemany(sql, insert_row)
+#    else:
+#        cons[idx%ncpus].executemany(sql, insert_row)
+#    print("event %s" % event[i])  
+#    print("insert_time from start:"+str(time.time()-time_insert_s)+"[s]")
+
+
       row[2] = int(re.search('[0-9]+', row[2]).group(0))
       #only cpu0 is inserted
       if(row[2]==0):
         cons[idx%ncpus].execute(sql, row)
+    print("insert_time from start:"+str(time.time()-time_insert_s)+"[s]")
 
+  time_commit_s = time.time()
   ### Close DB
   for i in range(ncpus):
     cons[i].commit()
     cons[i].close()
+    print("commit_%d" %i)
+    print("commit_time from start:"+str(time.time()-time_commit_s)+"[s]")
 
 ### Main
 if __name__ == '__main__':
