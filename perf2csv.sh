@@ -57,9 +57,10 @@ func1() {
   #   local PATTERN=${EVENTS_A[$IDX]}
   # fi
   local PATTERN=${EVENTS_A[$IDX]}
-  grep $PATTERN $INPUT | \
-    sed -e "/^#/d"     | \
-    sed "s/^ \+//g"    | \
+  grep $PATTERN $INPUT            | \
+    sed -e "/^#/d"                | \
+    sed "s/ (deleted)/(deleted)/" | \
+    sed "s/^ \+//g"               | \
     sed "s/:\? \+/;/g" >> ${OUTPUT}_${IDX}.csv
 }
 
@@ -68,13 +69,14 @@ func2() {
   local OUTPUT=$2
   [ -f ${OUTPUT}_p.csv ] && rm ${OUTPUT}_p.csv
   $PERF script -i ${INPUT}_p > $TMPDIR/$$_p
-  sed -e "/^#/d" $TMPDIR/$$_p | \
-    sed "s/^ \+//g"        | \
-    sed "s/:\? \+/;/"      | \
-    sed "s/:\? \+/;/"      | \
-    sed "s/:\? \+/;/"      | \
-    sed "s/:\? \+/;/"      | \
-    sed "s/:\? \+/;/" > ${OUTPUT}_p.csv
+  sed -e "/^#/d" $TMPDIR/$$_p   | \
+  sed "s/ (deleted)/(deleted)/" | \
+  sed "s/^ \+//g"               | \
+  sed "s/:\? \+/;/"             | \
+  sed "s/:\? \+/;/"             | \
+  sed "s/:\? \+/;/"             | \
+  sed "s/:\? \+/;/"             | \
+  sed "s/:\? \+/;/" > ${OUTPUT}_p.csv
   rm $TMPDIR/$$_p
 }
 
