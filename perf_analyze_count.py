@@ -146,16 +146,18 @@ scrdir = os.path.dirname(__file__)
 cpu    = 32               # ARG2
 #Hard coding (it is not good)
 #event  = "cpu-cycles"               # ARG3
-event  =["cpu/cpu-cycles"
+#--event hard coding
+event  =["icache.misses"
         ,"cpu/instructions"
-        ,"cpu/cache-misses"
-        ,"cpu/branch-misses"
+        ,"arith.fpu_div_active"
+        ,"mem_uops_retired.all_loads"
+        ,"mem_uops_retired.all_stores"
         ,"branch_instruction_retired"
         ,"Branch_Misses_Retired"
-        ,"mem_load_uops_retired.l1_miss"
-        ,"mem_load_uops_retired.l1_hit"]
+        ,"mem_load_uops_retired.l1_miss"]
 offset = 1.0              # ARG4
-length = 0.01              # ARG5
+#--length change
+length = 0.1              # ARG5
 
 if argc >= 2:
   input = argvs[1]
@@ -204,7 +206,7 @@ if not os.path.isfile(dbs[0]):
   
   for i in range(ncpus):
     cons[i].execute(sql)
-    cons[i].execute("create index analyze on perf_event(time,count,event)")
+#    cons[i].execute("create index analyze on perf_event(time,count,event)")
   
   time_insert_s = time.time()
   ### Insert Data
@@ -226,10 +228,10 @@ if not os.path.isfile(dbs[0]):
 #    print("event %s" % event[i])  
 #    print("insert_time from start:"+str(time.time()-time_insert_s)+"[s]")
 
-
       row[2] = int(re.search('[0-9]+', row[2]).group(0))
       #only cpu0 is inserted
       if(row[2]==0):
+#        print(row)
         cons[idx%ncpus].execute(sql, row)
     print("insert_time from start:"+str(time.time()-time_insert_s)+"[s]")
 
@@ -237,9 +239,10 @@ if not os.path.isfile(dbs[0]):
   ### Close DB
   for i in range(ncpus):
     cons[i].commit()
+    cons[i].execute("create index analyze on perf_event(time,count,event)")
     cons[i].close()
     print("commit_%d" %i)
-    print("commit_time from start:"+str(time.time()-time_commit_s)+"[s]")
+    print("commit_index_time from start:"+str(time.time()-time_commit_s)+"[s]")
 
 ### Main
 if __name__ == '__main__':
@@ -345,11 +348,13 @@ if __name__ == '__main__':
   ### Save Result
   writer = csv.writer(open('perf_analyze.csv', 'wb'), delimiter=';')
   #print(summary)
-  writer.writerow(["time"] + [ "%s" % event[i] for i in range(len(event)) ])
+  writer.writerow(["time"] + [ "%s" % event[i] for i in range(len(event)) ] + ["label"])
 #  time_csv_s =time.time()
   for i in range(len(summary)):
     t = [length*(i+1)]
-    writer.writerow(t+summary[i])
+    #--label for classification
+    label = [1]
+    writer.writerow(t + summary[i] + label)
 #  print("write csv time:"+str(time.time()-time_csv_s)+"[s]")
   #writer.writerows(summary)
 

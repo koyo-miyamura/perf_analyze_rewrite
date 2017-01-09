@@ -86,14 +86,23 @@ func2() {
 
 #To match pattern,the event's description has to change
 #and you don't give / to the last event description for matching
-EVENTS="cpu/cpu-cycles,period=10000000/"
-EVENTS=$EVENTS",cpu/instructions,period=10000000/"
+#EVENTS="cpu/cpu-cycles,period=10000000/"
+#EVENTS=$EVENTS",cpu/instructions,period=10000000/"
+#EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
+#EVENTS=$EVENTS",cpu/branch-misses,period=1000000/"
+#EVENTS=$EVENTS",cpu/event=0xc4,umask=0x00,name=branch_instruction_retired,period=100000/"
+#EVENTS=$EVENTS",cpu/event=0xc5,umask=0x00,name=Branch_Misses_Retired,period=10000/"
+#EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=10000/"
+#EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=10000000/"
+
+EVENTS="cpu/cpu-cycles,period=1000000/"
+EVENTS=$EVENTS",cpu/instructions,period=1000000/"
 EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
-EVENTS=$EVENTS",cpu/branch-misses,period=1000000/"
-EVENTS=$EVENTS",cpu/event=0xc4,umask=0x00,name=branch_instruction_retired,period=100000/"
-EVENTS=$EVENTS",cpu/event=0xc5,umask=0x00,name=Branch_Misses_Retired,period=10000/"
-EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=10000/"
-EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=10000000/"
+EVENTS=$EVENTS",cpu/branch-misses,period=1000/"
+EVENTS=$EVENTS",cpu/event=0xc4,umask=0x00,name=branch_instruction_retired,period=10000/"
+EVENTS=$EVENTS",cpu/event=0xc5,umask=0x00,name=Branch_Misses_Retired,period=1000/"
+EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=1000/"
+EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=100000/"
 
 INPUT=""
 PERF=`which perf`
@@ -131,6 +140,8 @@ OUTPUT=${OUTDIR}/`basename ${INPUT}`
 EVENTS_A=`split_events`
 
 $PERF script -i ${INPUT}_0 > $TMPDIR/$$
+echo ${EVENTS_A[*]}
+echo ${#EVENTS_A[*]}
 
 for IDX in `seq 0 $((${#EVENTS_A[*]} - 1))`
 do

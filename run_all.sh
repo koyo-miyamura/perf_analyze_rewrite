@@ -9,16 +9,20 @@ SCRDIR=$(readlink -f `dirname $0`)
 TMPDIR="${SCRDIR}/../tmp"
 
 RECORD=${SCRDIR}/p_rec.sh
-PERF2CSV=${SCRDIR}/perf2csv.sh
+#PERF2CSV=${SCRDIR}/perf2csv.sh
+PERF2CSV=${SCRDIR}/perf2csv_old.sh
 ANALYZE=${SCRDIR}/perf_analyze_count.py
 
-[ -d ${TMPDIR} ] && rm ${TMPDIR}/*
+#[ -d ${TMPDIR} ] && rm ${TMPDIR}/*
 
 ${RECORD} | tee record.log
 #${RECORD}
-${PERF2CSV} -i `cat ${TMPDIR}/p_rec.tmp` > perf2csv.log
+
+#${PERF2CSV} -i `cat ${TMPDIR}/p_rec.tmp` > perf2csv.log
+${PERF2CSV} -i `cat ${TMPDIR}/p_rec.tmp` | tee perf2csv.log
 
 ${ANALYZE} \
   `cat ${TMPDIR}/perf2csv.tmp` \
   `grep processor /proc/cpuinfo | wc -l` \
-   > perf_analyze.log
+   | tee perf_analyze.log
+
