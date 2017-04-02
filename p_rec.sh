@@ -62,12 +62,13 @@ EVENTS=$EVENTS",cpu/instructions,period=1000000/"
 EVENTS=$EVENTS",cpu/event=0x14,umask=0x01,name=arith.fpu_div_active,period=1000/"
 EVENTS=$EVENTS",cpu/event=0xd0,umask=0x81,name=mem_uops_retired.all_loads,period=1000/"
 EVENTS=$EVENTS",cpu/event=0xd0,umask=0x82,name=mem_uops_retired.all_stores,period=1000/"
+#EVENTS=$EVENTS",cpu/event=0xc4,umask=0x10,name=br_inst_retired.not_taken,period=1000/"
 #EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
 #EVENTS=$EVENTS",cpu/branch-misses,period=1000/"
 EVENTS=$EVENTS",cpu/event=0xc4,umask=0x00,name=branch_instruction_retired,period=10000/"
 EVENTS=$EVENTS",cpu/event=0xc5,umask=0x00,name=Branch_Misses_Retired,period=1000/"
+#EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=1000/"
 EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=1000/"
-#EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=100000/"
 PERF=`which perf`
 while getopts d:hp: OPT
 do

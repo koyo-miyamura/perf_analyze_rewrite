@@ -152,8 +152,10 @@ event  =["icache.misses"
         ,"arith.fpu_div_active"
         ,"mem_uops_retired.all_loads"
         ,"mem_uops_retired.all_stores"
+#        ,"br_inst_retired.not_taken"
         ,"branch_instruction_retired"
         ,"Branch_Misses_Retired"
+#        ,"mem_load_uops_retired.l1_hit"
         ,"mem_load_uops_retired.l1_miss"]
 offset = 1.0              # ARG4
 #--length change
@@ -353,7 +355,7 @@ if __name__ == '__main__':
   for i in range(len(summary)):
     t = [length*(i+1)]
     #--label for classification
-    label = [1]
+    label = [0]
     writer.writerow(t + summary[i] + label)
 #  print("write csv time:"+str(time.time()-time_csv_s)+"[s]")
   #writer.writerows(summary)
