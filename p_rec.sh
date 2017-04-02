@@ -56,6 +56,7 @@ OUTDIR=${SCRDIR}/../perf.data.dir
 #EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,freq=10/"
 #EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,freq=10/"
 
+#You can change here
 #EVENTS="cpu/cpu-cycles,period=1000000/"
 EVENTS="cpu/event=0x80,umask=0x02,name=icache.misses,period=1000/"
 EVENTS=$EVENTS",cpu/instructions,period=1000000/"

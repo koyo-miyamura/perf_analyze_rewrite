@@ -47,8 +47,9 @@ func2() {
 #EVENTS=$EVENTS",cpu/instructions,period=10000000/"
 #EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
 
-#To match pattern,the event's description has to change
-#and you don't give / to the last event description for matching
+#You can change here
+#To match pattern, the event's description has to change
+#and you must not give "/" to the last event description for matching
 EVENTS="icache.misses/"
 EVENTS=$EVENTS",cpu/instructions/"
 EVENTS=$EVENTS",arith.fpu_div_active/"

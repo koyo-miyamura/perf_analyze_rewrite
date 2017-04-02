@@ -1,17 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # by teruo
-# changed by koyo
+# changed by Koyo
 
 ## Readme ##
 # usage: ./perf_analyze.py input cpu event offset length
 # args:  input  := csv file (output of perf2csv.sh, without _p)
 #        cpu    := logical CPU core count, like 32
-#        event  := event name, like 'cpu-cycles'
+#        event  := event name, like 'cpu-cycles' (Koyo changed here to analysis all events at one execution.)
 #        offset := start offset[sec], like 10.0
 #        length := length[sec], like 0.1
 # note:  This script executes analysis from offset[sec] to offset + length[sec].
 # note:  sqlite3 and numpy library is required (maybe optional)
+# note:  Original script is perf_analyze.py and Koyo rewrite it. (Some rewriting may be makeshift)
 
 import os
 import sys
@@ -28,15 +29,6 @@ def gettime(db):
   con = sqlite3.connect(db)
   cur = con.cursor()
 
-#  min = float("inf")
-#  max = float("-inf")
-#  sql = u"select time from perf_event"
-#  for row in cur.execute(sql):
-#    if min > row[0]:
-#      min = row[0]
-#    if max < row[0]:
-#      max = row[0]
-  
   sql_min = u"select min(time) from perf_event"
   sql_max = u"select max(time) from perf_event"
   for row in cur.execute(sql_min):
@@ -66,24 +58,6 @@ def analyze_events(args):
 
   con = sqlite3.connect(db)
   cur = con.cursor()
-
-#  dict = {}
-#  for cpuid in range(cpu):
-#    sql  = u"select comm,sym,bin from perf_event"
-#    sql += u" where event like \"%%%s%%\" and cpu=%d" % (event, cpuid)
-#    sql += u" and  time between %f and %f"   % (start, end)
-#    for row in cur.execute(sql):
-#      funcname = ";".join(row)
-#      if dict.has_key(funcname):
-#        value = dict[funcname]
-#        value[cpuid] += 1
-#        dict[funcname] = value
-#      else:
-#        value = [ 0 for i in range(cpu) ]
-#        value[cpuid] += 1
-#        dict[funcname] = value
-#  con.close()
-#  return dict
   
   dict = [0 for i in range(len(event))]
   #only cpu0 is analyzed
@@ -91,12 +65,6 @@ def analyze_events(args):
     sql  = u"select count from perf_event"
     sql += u" where event like \"%%%s%%\" and cpu=%d" % (event[i], 0)
     sql += u" and  time between %f and %f"   % (start, end)
-    #the count of PC
-
-#    for row in cur.execute(sql):
-#      if(len(row)!=0):
-#        dict[i] += row[0]    
-
     cur.execute(sql)
     list = cur.fetchall()
     if(len(list)!=0):
@@ -108,24 +76,6 @@ def analyze_events(args):
 
 
 def reduce_analyze_events(li):
-#  summary = {}
-#  for dict in li:
-#    for key in dict.keys():
-#      if summary.has_key(key):
-#        summary[key] = summary[key] + numpy.array(dict[key])
-#      else:
-#        summary[key] = numpy.array(dict[key])
-#  return summary
-
-  #summary = {}
-  #for dict in li:
-  #  for event_name in dict.keys():
-  #    if summary.has_key(event_name):
-  #      summary[event_name] = summary[event_name] + dict[event_name]
-  #    else:
-  #      summary[event_name] = dict[event_name]
-  #return summary
-
   summary = [0 for i in range(len(li[0]))]
   for each_li in li:
     for i in range(len(each_li)):
@@ -144,8 +94,8 @@ ncpus  = multiprocessing.cpu_count()
 scrdir = os.path.dirname(__file__)
 
 cpu    = 32               # ARG2
-#Hard coding (it is not good)
-#event  = "cpu-cycles"               # ARG3
+#You can change here
+#Hard coding (It's makeshift)
 #--event hard coding
 event  =["icache.misses"
         ,"cpu/instructions"
@@ -158,7 +108,6 @@ event  =["icache.misses"
 #        ,"mem_load_uops_retired.l1_hit"
         ,"mem_load_uops_retired.l1_miss"]
 offset = 1.0              # ARG4
-#--length change
 length = 0.1              # ARG5
 
 if argc >= 2:
@@ -215,21 +164,7 @@ if not os.path.isfile(dbs[0]):
   for i in range(len(event)):
     reader = csv.reader(open(input+"_"+str(i)+".csv", 'rb'), delimiter=';')
     sql = u"insert into perf_event values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-#    insert_row = []
-#    insert_count = 0
     for idx, row in enumerate(reader):
-#      row[2] = int(re.search('[0-9]+', row[2]).group(0))
-#      #only cpu0 is inserted
-#      if(row[2]==0):
-#        insert_row.append(row)
-#        insert_count += 1
-#      if(insert_count % 200000 == 0):
-#        cons[idx%ncpus].executemany(sql, insert_row)
-#    else:
-#        cons[idx%ncpus].executemany(sql, insert_row)
-#    print("event %s" % event[i])  
-#    print("insert_time from start:"+str(time.time()-time_insert_s)+"[s]")
-
       row[2] = int(re.search('[0-9]+', row[2]).group(0))
       #only cpu0 is inserted
       if(row[2]==0):
@@ -263,119 +198,23 @@ if __name__ == '__main__':
   start = time_range[0] + offset
   summary = []
   while start < time_range[1]: 
-#  for i in range(100):
-#    time_s = time.time()
     end   = start + length
-
   ### Count CPU events
- # if event in [ "cpu-cycles", "instructions", "cache-misses" ]:
     args = []
     for i in range(ncpus):
      args.append((dbs[i], event, cpu, start, end))
     result2 = p.map(analyze_events, args)
-#    print("time:"+str(time.time()-time_s)+"[s]")
     summary.append(reduce_analyze_events(result2))
-#    cpu_events = numpy.array([ 0 for i in range(cpu) ])
-#    for key in summary.keys():
-#      cpu_events += summary[key]
-#      summary[key] = numpy.append(summary[key], numpy.sum(summary[key]))
-#
     start= start + length
-#  elif event in [ "mpki", "ipc" ]:
-#    if event == "mpki":
-#      event1 = "cache-misses"
-#      event2 = "instructions"
-#    elif event == "ipc":
-#      event1 = "instructions"
-#      event2 = "cpu-cycles"
-#
-#    args = []
-#    for i in range(ncpus):
-#      args.append((dbs[i], event1, cpu, start, end))
-#    for i in range(ncpus):
-#      args.append((dbs[i], event2, cpu, start, end))
-#    result2 = p.map(analyze_events, args)
-#
-#    summary  = {}
-#    summary1 = reduce_analyze_events(result2[0:ncpus-1])
-#    summary2 = reduce_analyze_events(result2[ncpus:ncpus*2-1])
-#
-#    cpu_events  = numpy.array([ 0 for i in range(cpu) ])
-#    cpu_events1 = numpy.array([ 0 for i in range(cpu) ])
-#    cpu_events2 = numpy.array([ 0 for i in range(cpu) ])
-#
-#    for key in summary1.keys():
-#      tmp = numpy.array([], dtype=numpy.float64)
-#      if summary2.has_key(key):
-#        cpu_events1 += summary1[key]
-#        cpu_events2 += summary2[key]
-#        for idx, num in enumerate(summary2[key]):
-#          if num == 0:
-#            tmp = numpy.append(tmp, 0.0)
-#          else:
-#            tmp = numpy.append(tmp, summary1[key][idx] / float(num))
-#        else:
-#          tmp = numpy.append(tmp, numpy.sum(summary1[key]) / float(numpy.sum(summary2[key])))
-#        summary[key] = tmp
-#    cpu_events_ratio = numpy.array([], dtype=numpy.float64)
-#    for idx, num in enumerate(cpu_events2):
-#      if num == 0:
-#        cpu_events_ratio = numpy.append(cpu_events_ratio, 0)
-#      else:
-#        cpu_events_ratio = numpy.append(cpu_events_ratio, cpu_events1[idx]/float(cpu_events2[idx]))
-#    else:
-#      cpu_events_ratio = numpy.append(cpu_events_ratio, sum(cpu_events1) / float(sum(cpu_events2)))
-#  else:
-#    quit()
-    
-
-#  for key, value in sorted(summary.items(), key=lambda x:x[1][cpu], reverse=True):
-#    if event in [ "cpu-cycles", "instructions", "cache-misses" ]:
-#      for cpuid in cpulist:
-#        if cpu_events[cpuid]:
-#          tmp = value[cpuid]/float(cpu_events[cpuid])*100
-#          print "%6.2f" % tmp,
-#        else:
-#          print "%6.2f" % 0,
-#      else:
-#        tmp = value[cpu]/float(sum(cpu_events))*100
-#        print "%6.2f" % tmp,
-#    elif event in [ "mpki", "ipc" ]:
-#      for cpuid in cpulist:
-#        print "%6.2f" % value[cpuid],
-#      else:
-#        print "%6.2f" % value[cpu],
-#    print "%10s;" % key
 
   ### Save Result
   writer = csv.writer(open('perf_analyze.csv', 'wb'), delimiter=';')
   #print(summary)
   writer.writerow(["time"] + [ "%s" % event[i] for i in range(len(event)) ] + ["label"])
-#  time_csv_s =time.time()
-  for i in range(len(summary)):
+  for i in range(len(summary) - 1):
     t = [length*(i+1)]
+    #You can change here
     #--label for classification
     label = [0]
     writer.writerow(t + summary[i] + label)
-#  print("write csv time:"+str(time.time()-time_csv_s)+"[s]")
-  #writer.writerows(summary)
 
-#  writer.writerow(["C0-State Ratio[%]"] + cpurunning + ["nan"])
-#  writer.writerow(["%s" % event] + cpu_events_ratio.tolist() + ["100.0"])
-  
-#  for key, value in sorted(summary.items(), key=lambda x:x[1][cpu], reverse=True):
-#    row = [key]
-#    if event in [ "cpu-cycles", "instructions", "cache-misses" ]:
-#      for cpuid in range(cpu):
-#        if cpu_events[cpuid]:
-#          row.append(value[cpuid]/float(cpu_events[cpuid])*100)
-#        else:
-#          row.append(0.0)
-#      else:
-#        row.append(value[cpu]/float(sum(cpu_events))*100)
-#    elif event in [ "mpki", "ipc" ]:
-#      for cpuid in range(cpu):
-#        row.append(value[cpuid])
-#      else:
-#        row.append(value[cpu])
-#    writer.writerow(row)

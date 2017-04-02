@@ -95,6 +95,7 @@ func2() {
 #EVENTS=$EVENTS",cpu/event=0xd1,umask=0x08,name=mem_load_uops_retired.l1_miss,period=10000/"
 #EVENTS=$EVENTS",cpu/event=0xd1,umask=0x01,name=mem_load_uops_retired.l1_hit,period=10000000/"
 
+#You can change here
 EVENTS="cpu/cpu-cycles,period=1000000/"
 EVENTS=$EVENTS",cpu/instructions,period=1000000/"
 EVENTS=$EVENTS",cpu/cache-misses,period=1000/"
